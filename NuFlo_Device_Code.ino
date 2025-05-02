@@ -15,16 +15,16 @@
 #define BUFFER_SIZE                85
 
 //------- Pin Definitions (use actual ESP32 ADC1 pins)
-#define turbidityPin    32   // ADC1_CH4
-#define temperaturePin  33   // ADC1_CH5
-#define phPin           34   // ADC1_CH6
+#define tdsPin    2  
+#define temperaturePin  3   
+#define phPin           4  
 
 #define DELAY_TIME      2000  // ms
 
 // Sensor readings
-int   rawTurbidity;
-int   rawTemp;
-int   rawPH;
+float   rawTds;
+float   rawTemp;
+float   rawPH;
 float voltageTemp;
 float temperatureC;
 float phValue;
@@ -41,7 +41,7 @@ void OnTxTimeout( void );
 void setup() {
   Serial.begin(115200);
 
-  pinMode(turbidityPin,   INPUT);
+  pinMode(tdsPin,   INPUT);
   pinMode(temperaturePin, INPUT);
   pinMode(phPin,          INPUT);
 
@@ -61,20 +61,17 @@ void setup() {
 
 void loop() {
   // --- 1) Read raw ADC ---
-  rawTurbidity = analogRead(turbidityPin);
+  rawTds       = analogRead(tdsPin);
   rawTemp      = analogRead(temperaturePin);
   rawPH        = analogRead(phPin);
 
-  // --- 2) Temperature conversion (unchanged) ---
+
+  //NO TDS?
+  //Temperature sensor seems wrong down here:
   voltageTemp   = rawTemp * (3.3 / 4095.0);
   temperatureC  = (voltageTemp - 0.5) * 100.0;
 
-  // --- 3) pH conversion using your UNO‐calibrated formula ---
-  //    a) convert 12-bit down to 10-bit
-  int sensorValue10 = rawPH >> 2;  
-  //    b) voltage on a 5V/1023 scale
-  float voltagePH   = sensorValue10 * (5.0 / 1023.0);
-  //    c) your exact linear fit
+  float voltagePH   = rawPH * (5.0 / 1023.0);
   phValue           = (-5.76923 * voltagePH) + 21.48077;
 
   // --- 4) Send via LoRa when ready ---
